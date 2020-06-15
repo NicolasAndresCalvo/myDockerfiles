@@ -1,0 +1,36 @@
+FROM keymetrics/pm2:latest-alpine
+
+RUN apk update \
+    && apk add ca-certificates wget \
+    && update-ca-certificates
+
+RUN apk add yarn
+
+RUN apk add python2
+
+RUN apk add make \
+    && apk add g++ \
+    && apk add gcc
+
+RUN npm install pm2 -g && npm install node-gyp -g
+ENV NPM_CONFIG_LOGLEVEL warn
+
+RUN mkdir /var/www/ \
+    && mkdir /var/www/newsenhancit/ \
+    && mkdir /var/www/newsenhancit/src/
+
+WORKDIR /var/www/newsenhancit/
+ARG source
+ENV ASPNETCORE_URLS https://+:443
+EXPOSE 443
+COPY ${source:-/} .
+
+RUN pwd
+
+RUN npm install
+
+RUN yarn build
+
+RUN ls -la
+
+CMD ["pm2-runtime", "start", "ecosystem.config.js", "--name", "news"]
